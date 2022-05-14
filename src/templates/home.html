@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    {#    <title>You are querying: {{ query }}</title>#}
+    <title>Flask app</title>
+    {% block styles %}
+        <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+        {#        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">#}
+
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+              integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+              crossorigin="anonymous">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css"
+              integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/"
+              crossorigin="anonymous">
+        {#        <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.19.1/dist/bootstrap-table.min.css">#}
+        <link href="https://unpkg.com/bootstrap-table@1.19.1/dist/bootstrap-table.min.css" rel="stylesheet">
+
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+
+    {% endblock %}
+</head>
+<body>
+<header>
+    <div class="container">
+        <h1 class="logo">Evidence Computing</h1>
+        <strong>
+            <nav>
+                <ul class="menu">
+                    <li><a href="{{ url_for('home') }}">Home</a></li>
+{#                    <li><a href="{{ url_for('about') }}">About</a></li>#}
+                </ul>
+            </nav>
+        </strong>
+    </div>
+</header>
+<div class="container"
+    style="box-sizing: border-box;
+            {#max-width: 869px;#}
+            {#margin: 0;#}
+            {#padding: 0;#}
+            font-smoothing: antialiased;
+            font-family: Lato,Helvetica Neue,Helvetica,-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Hiragino Sans GB,Microsoft YaHei,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol;
+            font-size: 1rem;
+            line-height: 1.375rem;
+            display:block;
+            color: #4c5258;
+            font-variant-numeric: lining-nums;">
+    <h2 style="font-size: 2.25rem; font-family: 'Lato Semibold';"> Clinical Evidence Extraction and Verification Demo </h2>
+    <p style="color: #4c5258; font-size: 1.25rem; font-family: 'Segoe UI';">Welcome to our demo of a scientific claim verification system for clinical research!</p>
+    <p style="color: #4c5258; font-size: 1.25rem; font-family: 'Segoe UI';">Our database contains over <b>470,000</b> PubMed article abstracts for completed randomized controlled trials from <b>1990</b> to <b>2021</b>.</p>
+    <p style="color: #4c5258; font-size: 1.25rem; font-family: 'Segoe UI';">Find out whether clinical trial studies <b>supports</b> or <b>refutes</b> your claim.</p>
+
+    <form method="POST" class="form" id="fm" style="font-family: 'Segoe UI'">
+        <p>Please select a search type from <i><b>Raw text</b></i> or <i><b>PICO</b></i> (recommend): </p>
+        <select name="search_type" style="width:250px; margin-bottom: 0.5rem">
+            <option value="" disabled="disabled" hidden="hidden" selected {% if search_type=="" %} selected {% endif %} >
+                Select a search type
+            </option>
+            <option value="Raw text" {% if search_type=="all" %} selected {% endif %} >Raw text</option>
+            <option value="PICO" {% if search_type=="pico" %} selected {% endif %} >PICO</option>
+        </select>
+
+        <div style="margin-top: 0.75rem;font-family: 'Segoe UI'">
+            <p>Please type in a claim to search for evidence: {{ sent1 }}</p>
+        </div>
+{#        <p>Please type in a claim to search for evidence: {{ sent1 }}</p>#}
+{#        <input id="claim" name="claim" size="100" value="{{ query }}">#}
+{#        <input id="submit" type="submit">#}
+        <div class="input-group mb-3">
+                <input style="font-size: 16px;padding: 10px 8px !important;"
+                       type="text" id="claim" name="claim" size="90" placeholder="Enter your claim..." value="{{ query }}">
+                <div class="input-group-append">
+                    <button id="btn_submit" class="btn btn-outline-primary" type="submit" onclick="btn_sub()" >Submit</button>
+                </div>
+            </div>
+    </form>
+
+
+    <hr class="dotted" color="blue">
+    <div style="padding: 0.75rem;
+            background: rgb(255, 249, 232);
+            border: 1px solid rgb(255, 207, 143);
+            border-radius: 4px;
+            margin-bottom: 4px;">
+        <p><b>You are querying: </b> {{ query }}</p>
+        <div id="picoParsed">
+            {% if pico_list | length >1 %}
+                {% for pico in pico_list %}
+                    <p><b> {{ pico[1] }}: </b> {{ pico[0] }}</p>
+                {% endfor %}
+            {% endif %}
+        </div>
+        <div id="negations">
+            {% if negations | length > 0 %}
+                {% for neg in negations %}
+                    <p><b> Negation cue: </b> <span style="color: white; background-color: #CB523E; padding: 2px">{{ neg[0] }}</span></p>
+                    <p><b> Negation scope: </b> <span style="color: white; background-color: #B13B2E; padding: 2px">{{ neg[1] }}</span></p>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+    </div>
+    <hr class="dotted" color="blue">
+
+    <div id="summary" style="font-size:20px;
+        font-family: 'Segoe UI';
+        padding: 0.75rem;
+        background: rgb(255, 249, 232);
+        border: 1px solid rgb(255, 207, 143);
+        border-radius: 4px;
+        margin-bottom: 4px;"></div>
+
+    <hr class="dotted" color="blue">
+
+    <br>
+
+</div>
+
+<!-- The Modal -->
+  <div class="modal" id="myModal" data-keyboard="false" data-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h4 class="modal-title">Verifying claim in process ...</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+
+        <!-- Modal body -->
+        <div class="modal-body" style="text-align:center;">
+            <p>Please wait while we are preparing the results.</p>
+            <p>This may take about 15 seconds to 10 minutes depending on the number of relevant studies to your query.</p>
+            <p>This page will reload after the verification is done.</p>
+            <div style="margin: auto;">
+                <span class="fa fa-spinner fa-spin fa-3x"></span>
+            </div>
+
+        </div>
+
+        <!-- Modal footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+{#    <script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>#}
+{#    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js" integrity="sha384-7+zCNj/IqJ95wo16oMtfsKbZ9ccEh31eOz1HGyDuCQ6wgnyJNSYdrPa03rtR1zdB" crossorigin="anonymous"></script>#}
+{#    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13" crossorigin="anonymous"></script>#}
+{#    <script type="text/javascript" charset="utf8"  src="https://unpkg.com/bootstrap-table@1.19.1/dist/bootstrap-table.min.js"></script>#}
+
+<script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/tableexport.jquery.plugin@1.10.21/tableExport.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tableexport.jquery.plugin@1.10.21/libs/jsPDF/jspdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tableexport.jquery.plugin@1.10.21/libs/jsPDF-AutoTable/jspdf.plugin.autotable.js"></script>
+<script src="https://unpkg.com/bootstrap-table@1.19.1/dist/bootstrap-table.min.js"></script>
+<script src="https://unpkg.com/bootstrap-table@1.19.1/dist/extensions/export/bootstrap-table-export.min.js"></script>
+
+</body>
+
+{% block script %}
+
+
+    <script>
+
+
+        var $table = $('#table')
+
+        var data = []
+
+
+        function btn_sub(){
+                    console.log('button here')
+                  // disable button
+                  $('#btn_submit').prop("disabled", true);
+                  // add spinner to button
+                  $('#btn_submit').html(
+                    `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...`
+                  );
+                  $('#myModal').modal('show');
+                  $('#fm').submit();
+                }
+
+        function escapeRegex(string) {
+            {#return string.replace(/[-\/\\^$*+!%<:?.()|[\]{}]/g, '\\$&');#}
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            {#return string.replace(/[-[\]{}()*+!<=:?.\/\\^$|#\s,]/g, '\\$&')#}
+            {#return string.replace(/[\-\[\]{}()*+?.,\\\^$|#\s]/g, "\\$&");#}
+            {#return string.replace(/[\-\[\]{}()*+!%<:?.,\\\^$|#\s]/g, "\\$&");#}
+        }
+
+        function hidSummary() {
+            if (data.length < 1)
+                document.getElementById('summary').style.display = "none";
+            else
+                document.getElementById('summary').style.display = 'block';
+        }
+
+        function formatPICO() {
+            var html = []
+            var intervention = ['<b>Intervention:</b> ']
+            var participant = ['<b>Participant:</b> ']
+            var outcome = ['<b>Outcome:</b> ']
+            var observation = ['<b>Observation:</b> ']
+
+            {% if pico_list | length >1 %}
+                {% for pico in pico_list %}
+                    if ('{{ pico[1] }}' == 'Intervention') {
+                        intervention.push('{{ pico[0] }};')
+                    } else if ('{{ pico[1] }}' == 'Participant') {
+                        participant.push('{{ pico[0] }};')
+                    } else if ('{{ pico[1] }}' == 'Outcome') {
+                        outcome.push('{{ pico[0] }};')
+                    } else if ('{{ pico[1] }}' == 'Observation') {
+                        observation.push('{{ pico[0] }};')
+                    }
+                {% endfor %}
+                html.push('<p>' + participant.join(' ') + '</p>')
+                html.push('<p>' + intervention.join(' ') + '</p>')
+                html.push('<p>' + observation.join(' ') + '</p>')
+                html.push('<p>' + outcome.join(' ') + '</p>')
+                $('#picoParsed').html(html)
+            {% else %}
+                document.getElementById('picoParsed').style.display = "none";
+            {% endif %}
+        }
+
+
+
+
+
+
+
+
+        $(function () {
+            console.log('load page...')
+
+
+            function method1() {
+                // some code
+                console.log('run method 1...')
+                {% for study in study_list %}
+                    var dict = {}
+                    dict.doc_id = "{{ study.doc_id }}"
+                    dict.doc_score = "{{ study.doc_score }}"
+                    dict.title = "{{ study.title }}"
+                    dict.sentences = {{ study.sentences | tojson |safe }}
+                    dict.overall_relevance = "{{ study.relevance }}"
+                    {#dict.label = {{ study.label }}#}
+                    if (dict.overall_relevance == "Somehow relevant") {
+                        dict.label = "N/A"
+                    } else {
+                        var label = '{{  study.label }}'
+                        if (label == 'contradiction') {
+                            label = 'refute'
+                        }
+                        dict.label = label.toUpperCase()
+                    }
+                    if (dict.overall_relevance != "irrelevant") {
+                        data.push(dict)
+                    }
+                {% endfor %}
+
+                console.log('finish method 1...')
+            }
+
+            function method2() {
+                // some code
+                console.log('run method 2...')
+                {#console.log(data)#}
+
+                $table.bootstrapTable('refreshOptions', {
+                    sortable: $('#sortable').prop('checked'),
+                    data: data,
+                    pageSize: 25,
+                    pageList: [5, 10, 25, 100, 'All'],
+                    exportTypes: ['json', 'xml', 'csv', 'txt', 'sql', 'excel', 'pdf'],
+                })
+
+                var flag = $('#show-score').prop('checked')
+
+                if (flag == true) {
+                    $table.bootstrapTable('hideColumn', 'doc_score');
+                }
+                check_data()
+                {#hidSummary()#}
+                formatPICO()
+                console.log('finish method 2...')
+            }
+
+
+            $.ajax({
+                url: method1(),
+                success: function () {
+                    method2();
+                }
+            })
+
+
+
+
+
+
+
+
+            {#$('#fm').on('submit', function (e) {#}
+            {#    $.ajax({#}
+            {#        type: 'post',#}
+            {#        url: '/App',#}
+            {#        data: $('#fm').serialize(),#}
+            {#        success: function (q) {#}
+            {#            document.getElementById("pb").innerHTML = q;#}
+            {#        }#}
+            {#    });#}
+            {#    e.preventDefault();});#}
+
+            {#$('#fm').on('submit', function (e) {#}
+            {#    console.log('query start here:')#}
+            {#    $.ajax({#}
+            {#            url: "/evidence/data",#}
+            {#            type: "POST",#}
+            {#            dataType: "json",#}
+            {#            success: function (data) {#}
+            {#                console.log(data)#}
+            {#                this.data = data#}
+            {#            }#}
+            {#        });#}
+            {#    })#}
+
+            {#$('#submit').on('click',function (e) {#}
+            {#    console.log('query start here:')#}
+            {#    $.ajax({#}
+            {#            url: "/api/data",#}
+            {#            type: "POST",#}
+            {#            dataType: "json",#}
+            {#            data: $('#claim').serialize(),#}
+            {#            success: function (data) {#}
+            {#                console.log(data)#}
+            {#                this.data = data#}
+            {#            }#}
+            {#        });#}
+            {#    })#}
+
+
+            $('#show-score').change(function () {
+                var flag = $('#show-score').prop('checked')
+                console.log(flag)
+                var $table = $('#table');
+
+                if (flag == true) {
+                    $table.bootstrapTable('hideColumn', 'doc_score');
+                } else {
+                    $table.bootstrapTable('showColumn', 'doc_score');
+                }
+
+            })
+
+
+            $('#sortable').change(function () {
+
+                console.log(data)
+
+                $table.bootstrapTable('refreshOptions', {
+                    sortable: $('#sortable').prop('checked'),
+                    data: data,
+                })
+            });
+
+        })
+
+
+
+
+    </script>
+
+
+{% endblock %}
+</html>

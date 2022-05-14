@@ -26,8 +26,8 @@ docker-compose down -v
 We can use `curl` to make requests to our API. There is one endpoint `/universities`, so let's test that out.
 
 ```curl
-curl localhost:5000/universities?country=Germany
-curl localhost:6000/test?country=798
+curl localhost:5555/universities?country=Germany
+curl localhost:5555/test?country=798
 ```
 
 
