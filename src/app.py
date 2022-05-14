@@ -10,6 +10,9 @@ cache = Cache(app)  # Initialize Cache
 
 pico_fetcher = PICO_Class()
 
+def make_cache_key():
+    return request.form['search_type'] + '_' + request.form['claim']
+
 @app.route('/')
 @cache.cached(timeout=300)
 def home():  # put application's code here
@@ -17,8 +20,10 @@ def home():  # put application's code here
 
 
 @app.route('/', methods=['POST'])
+@cache.cached(timeout=300, key_prefix=make_cache_key)
 def evidence_post_pico():
     claim = request.form['claim']
+    print(f'querying claim: {claim}')
     claim = str(claim).strip()
     search_type = request.form['search_type']
     if search_type == 'Raw text':
@@ -73,6 +78,10 @@ def get_class():
         "<html><body>foo cache: {{cls_list[0].sentence}}  foo cache: {{cls_list[1].sent_score}}</body></html>", cls_list=cls_list
     )
 
+@app.route('/about')
+def about():
+    return render_template('about.html', title='About',
+                           content='This is the About page')
 
 @app.route("/pico")
 @cache.cached(timeout=60, query_string=True)

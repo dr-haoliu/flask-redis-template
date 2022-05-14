@@ -29,7 +29,7 @@
             <nav>
                 <ul class="menu">
                     <li><a href="{{ url_for('home') }}">Home</a></li>
-{#                    <li><a href="{{ url_for('about') }}">About</a></li>#}
+                    <li><a href="{{ url_for('about') }}">About</a></li>
                 </ul>
             </nav>
         </strong>
@@ -63,11 +63,9 @@
         </select>
 
         <div style="margin-top: 0.75rem;font-family: 'Segoe UI'">
-            <p>Please type in a claim to search for evidence: {{ sent1 }}</p>
+            <p>Please type in a claim to search for evidence: </p>
         </div>
-{#        <p>Please type in a claim to search for evidence: {{ sent1 }}</p>#}
-{#        <input id="claim" name="claim" size="100" value="{{ query }}">#}
-{#        <input id="submit" type="submit">#}
+
         <div class="input-group mb-3">
                 <input style="font-size: 16px;padding: 10px 8px !important;"
                        type="text" id="claim" name="claim" size="90" placeholder="Enter your claim..." value="{{ query }}">
@@ -174,9 +172,6 @@
 
     <script>
 
-
-        var $table = $('#table')
-
         var data = []
 
 
@@ -280,21 +275,6 @@
                 console.log('run method 2...')
                 {#console.log(data)#}
 
-                $table.bootstrapTable('refreshOptions', {
-                    sortable: $('#sortable').prop('checked'),
-                    data: data,
-                    pageSize: 25,
-                    pageList: [5, 10, 25, 100, 'All'],
-                    exportTypes: ['json', 'xml', 'csv', 'txt', 'sql', 'excel', 'pdf'],
-                })
-
-                var flag = $('#show-score').prop('checked')
-
-                if (flag == true) {
-                    $table.bootstrapTable('hideColumn', 'doc_score');
-                }
-                check_data()
-                {#hidSummary()#}
                 formatPICO()
                 console.log('finish method 2...')
             }
@@ -309,48 +289,6 @@
 
 
 
-
-
-
-
-
-            {#$('#fm').on('submit', function (e) {#}
-            {#    $.ajax({#}
-            {#        type: 'post',#}
-            {#        url: '/App',#}
-            {#        data: $('#fm').serialize(),#}
-            {#        success: function (q) {#}
-            {#            document.getElementById("pb").innerHTML = q;#}
-            {#        }#}
-            {#    });#}
-            {#    e.preventDefault();});#}
-
-            {#$('#fm').on('submit', function (e) {#}
-            {#    console.log('query start here:')#}
-            {#    $.ajax({#}
-            {#            url: "/evidence/data",#}
-            {#            type: "POST",#}
-            {#            dataType: "json",#}
-            {#            success: function (data) {#}
-            {#                console.log(data)#}
-            {#                this.data = data#}
-            {#            }#}
-            {#        });#}
-            {#    })#}
-
-            {#$('#submit').on('click',function (e) {#}
-            {#    console.log('query start here:')#}
-            {#    $.ajax({#}
-            {#            url: "/api/data",#}
-            {#            type: "POST",#}
-            {#            dataType: "json",#}
-            {#            data: $('#claim').serialize(),#}
-            {#            success: function (data) {#}
-            {#                console.log(data)#}
-            {#                this.data = data#}
-            {#            }#}
-            {#        });#}
-            {#    })#}
 
 
             $('#show-score').change(function () {
